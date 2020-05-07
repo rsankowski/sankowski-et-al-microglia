@@ -1,6 +1,6 @@
 #figure 1
-source("bin/RaceID3_StemID2_class.R")
-source("bin/sankowski-et-al-functions.R")
+source("functions/RaceID3_StemID2_class.R")
+source("functions/sankowski-et-al-functions.R")
 library(tidyverse)
 library(viridis)
 library(reshape2)

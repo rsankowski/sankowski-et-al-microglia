@@ -8,6 +8,7 @@ library(org.Hs.eg.db)
 #load data
 load("data/counts_control.RData")
 load("data/df_control.RData")
+source("functions/sankowski-et-al-functions.R")
 
 #go term analysis
               load("data/up_genes_control.RData") 
