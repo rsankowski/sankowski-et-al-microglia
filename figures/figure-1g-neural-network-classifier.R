@@ -132,6 +132,12 @@ table(train_data[-train,1], predictions+1)
 mean(train_data[-train,1] == predictions+1)
 
 
+
+#The script below tests the classification of independent human datasets, 
+#as some of them have restricted access I only provide the output of the predictions in the data/deep-learning-predictor-control folder
+
+
+if (F) {
 #autism data- healthy
 load(dataset)
 
@@ -329,3 +335,4 @@ head(predictions_jackel)
 
 save(predictions_jackel, file = "data/jackel-predictions.Robj")
 
+}
