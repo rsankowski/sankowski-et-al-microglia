@@ -1,7 +1,10 @@
 #Sankowski et al -functions and plots
+require(tidyverse)
+require(viridis)
+source("functions/RaceID3_StemID2_class.R")
 
 #colors
-colors_many <- toupper(read_csv('/home/roman/Documents/Single cell analysis/20180313_trubetskoy_colors.csv')[[3]])
+colors_many <- toupper(read_csv('data/20180313_trubetskoy_colors.csv')[[3]])
 colors <- toupper(c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'))
 colors_pat <- toupper(c('#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','#d9d9d9','#bc80bd','#ccebc5'))
 colors_fig <- c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788",'#984EA3', "light grey", "grey", "dark grey", "#696969")
@@ -12,12 +15,12 @@ run_raceid <- function(.prdata = prdata,
                        .mintotal = 1500, 
                        .CGenes = c("HSP90AA1__chr14", "HSPA1A__chr6", "MTRNR2L1__chrX", "MTRNR2L12__chr3", "MTRNR2L8__chr11", "FOS__chr14", "MALAT1__chr11", "JUN__chr1", "DUSP1__chr5"),
                        .FGenes = c("HSPB1__chr7", "HSPA6__chr1", "HSPH1__chr13", "HSPA1B__chr6", "HSP90AB1__chr6", "FOSB__chr19", "HSP90B1__chr12", "RPS16__chr19","DNAJB1__chr19", "H3F3B__chr17", "HERPUD1__chr16", "NEAT1__chr11", "RP11-212I21.4__chr16", "IVNS1ABP__chr1", "HSPA8__chr11", "HIST1H2BG__chr6", "HSPA5__chr9", "JUNB__chr19","ZFP36L1__chr14"),
-                       location_batch_info='/home/roman/Documents/Single cell analysis/20170921 Healthy microglia/20171210-batch-information.csv',
+                       #location_batch_info='data/batch_info.csv',
                        PCs_for_clustering = NULL,
                        .cln=cln
 ) {
   require(tidyverse)
-  source("bin/Single cell analysis/RaceID3_StemID2/RaceID3_StemID2_class.R")
+  
   
   data <- SCseq(.prdata)
   # filtering of expression data
@@ -49,11 +52,13 @@ run_raceid <- function(.prdata = prdata,
   
   data_t$ID <- gsub('GM|WM|all|micr|pos|17Pl1|17Pl2', '', data_t$ID)
   
-  batch_info <- read_csv(location_batch_info)[,-1]
-  data_t <- merge(data_t, batch_info)
-  table(data_t$ID, data_t$Batch)
-  vars <- as.data.frame(data_t$Batch[data_t$cell_ID %in% colnames(data@fdata)])
-  data@fdata <- varRegression(data@fdata,vars)
+  #regress out batch effects 
+  if (F) {
+    batch_info <- read_csv(location_batch_info)[,-1]
+    data_t <- merge(data_t, batch_info)
+    table(data_t$ID, data_t$Batch)
+    vars <- as.data.frame(data_t$Batch[data_t$cell_ID %in% colnames(data@fdata)])
+    data@fdata <- varRegression(data@fdata,vars)}
   
   # correct for cell cycle, proliferation, and expression of degradation markers by PCA
   # optional:
@@ -266,9 +271,9 @@ hyper_test <- function(data1 = sc, data2 = df, var1 = "Cluster", var2 = "Region"
 }
 
 #plots
-plotexptsne2 <-   function(gene, .df=df, .sc=counts, point_size=2.5, logsc=FALSE, line_width=0.25) {
+plotexptsne2 <-   function(gene, .df=df, .sc=counts, point_size=3, logsc=FALSE, line_width=0.25) {
   gene = name2id(gene, rownames(.sc))
-  l <- colSums(.sc[rownames(.sc) %in% gene,])
+  l <- colSums(.sc[rownames(.sc)[rownames(.sc) %in% gene],])
   mi <- min(l)
   ma <- max(l)
   ColorRamp <- colorRampPalette(c("darkblue","lightblue2","yellow","red2"))(100)
@@ -762,7 +767,7 @@ make_data_long <- function(data1 = df, data2 = sc, order_clusters = levels(df$Cl
 
 #line plot
 gene_line_plot <- function(data = data_long, gene) {
-  line_plot <- ggplot(data[data$Gene %in% gene,], aes(x=ID, y=Expression, color = Cluster, fill = Cluster)) +
+  line_plot <- ggplot(data[data$Gene %in% gene,], aes(x=cell_ID, y=Expression, color = Cluster, fill = Cluster)) +
     geom_bar(stat = 'identity') + #width = 0.1, 
     facet_grid(facets = ~Cluster, 
                drop = TRUE, 

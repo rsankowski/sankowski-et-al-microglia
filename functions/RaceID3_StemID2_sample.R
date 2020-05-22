@@ -102,7 +102,7 @@ cdiff <- clustdiffgenes(sc,pvalue=.01)
 # final clusters 
 x <- data.frame(CELLID=names(sc@cpart),cluster=sc@cpart)
 write.table(x[order(x$cluster,decreasing=FALSE),],"cell_clust.xls",row.names=FALSE,col.names=TRUE,sep="\t",quote=FALSE)
-
+  
 # differentially expressed genes in cluster
 for ( n in names(cdiff) ) write.table(data.frame(GENEID=rownames(cdiff[[n]]),cdiff[[n]]),paste(paste("cell_clust_diff_genes",sub("\\.","\\_",n),sep="_"),".xls",sep=""),row.names=FALSE,col.names=TRUE,sep="\t",quote=FALSE)
 

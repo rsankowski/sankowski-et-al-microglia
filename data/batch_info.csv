@@ -1,0 +1,16 @@
+Condition,Age,Freq,anon_ID,Gender,Surgery indication,Localization,Batch,Grey-white matter separated,Age group
+N635,14,494,Pat1,Female,Epilepsy,Temporal,F,yes,<30 years
+N117017,15,320,Pat2,Male,Epilepsy,Temporal,D,yes,<30 years
+N11018,21,198,Pat3,Male,Epilepsy,Temporal,E,yes,<30 years
+N900,23,158,Pat4,Male,Epilepsy,Frontal,B,yes,<30 years
+N665,30,303,Pat5,Male,Epilepsy,Temporal,F,yes,30-50 years
+N1496,36,199,Pat6,Male,Glioma,Temporal,D,no,30-50 years
+BM,38,343,Pat7,Male,Epilepsy,Temporal,B,yes,30-50 years
+N754,43,411,Pat8,Female,Epilepsy,Temporal,F,yes,30-50 years
+N133217,45,283,Pat9,Female,Glioma,Temporal,E,yes,30-50 years
+N430,46,168,Pat10,Male,Epilepsy,Temporal,B,yes,30-50 years
+N120117,52,258,Pat11,Female,Epilepsy,Temporal,C,no,>50 years
+HEMG,54,291,Pat12,Female,Epilepsy,Temporal,A,no,>50 years
+FV20850,68,186,Pat13,Male,Glioma,Temporal,F,yes - GM only,>50 years
+N415,74,266,Pat14,Female,Glioma,Temporal,B,no,>50 years
+SB,74,244,Pat15,Female,Carcinoma,Temporal,C,yes,>50 years
