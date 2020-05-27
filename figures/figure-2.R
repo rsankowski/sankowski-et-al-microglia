@@ -9,6 +9,8 @@ library(org.Hs.eg.db)
 load("data/counts_control.RData")
 load("data/df_control.RData")
 source("functions/sankowski-et-al-functions.R")
+ord_clust <- levels(df_control$Cluster)
+retain_cl <- unique(df_control$Cluster)
 
 #go term analysis
               load("data/up_genes_control.RData") 
@@ -104,16 +106,14 @@ source("functions/sankowski-et-al-functions.R")
               #introduce line breaks
               enrich_up$Description <- gsub('exogenous peptide antigen via MHC class I,', 'exogenous \npeptide antigen via MHC class I', enrich_up$Description)
               
-              enrich_up <- enrich_up[enrich_up$Cluster %in% retain_cl,]
-              ord_clust <- clustheatmap(sc, final = T, hmethod = "single")
-              ord_clust <- ord_clust[ord_clust %in% retain_cl]
               enrich_up$Cluster <- factor(enrich_up$Cluster, levels = ord_clust)
               enrich_up$Description <- reorder(enrich_up$Description,enrich_up$Description,FUN=length)
               
               #re-order enrich_up based on the levels of Cluster
               enrich_up <- enrich_up[with(enrich_up, order(Cluster)),] #from url: https://stackoverflow.com/questions/1296646/how-to-sort-a-dataframe-by-columns
               enrich_up$Description <- factor(enrich_up$Description, levels = rev(enrich_up$Description[!duplicated(enrich_up$Description)]))
-              colnames(enrich_up)[9] <- 'GeneCount'
+              colnames(enrich_up)[10] <- 'GeneCount'
+              enrich_up <- na.omit(enrich_up)
               
               dot_plot <- ggplot(enrich_up, aes(Cluster, Description, size = GeneCount, fill= -log2(qvalue))) + #[enrich_up$GeneCount>4,]
                 geom_point(pch=21, stroke=0.25) +

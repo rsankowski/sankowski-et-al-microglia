@@ -70,7 +70,7 @@ plotexptsne2(gene = genes, .sc=counts2)
 
 #suppl figure 2a
 load("data/GO-terms-bp-gbm.RData")
-dot_plot <- ggplot(enrich_up, aes(Cluster, Description, size = GeneCount, fill= -log2(qvalue))) + #[enrich_up$GeneCount>4,]
+dot_plot <- ggplot(enrich_up, aes(Cluster, Description, size = GeneCount, fill= -log2(qvalue))) +
   geom_point(pch=21, stroke=0.25) +
   scale_fill_viridis() +
   theme_light() +
