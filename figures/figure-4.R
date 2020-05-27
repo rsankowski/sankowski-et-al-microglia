@@ -66,7 +66,12 @@ gene_line_plot(data_long, gene = "IFI44")
 #plot go terms
 genes <- c(strsplit(enrich_up[enrich_up$ID == "GO:0010573",'geneID'], split ='/')[[1]])
 counts2 <- counts[genes,]
-plotexptsne2(gene = genes, .sc=counts2)
+plotexptsne2(gene = genes, .sc=counts2, line_width = 0)
+
+genes <- c(strsplit(enrich_up[enrich_up$ID == "GO:0002480",'geneID'], split ='/')[[1]])
+counts2 <- counts[genes,]
+plotexptsne2(gene = genes, .sc=counts2, line_width = 0)
+
 
 #suppl figure 2a
 load("data/GO-terms-bp-gbm.RData")

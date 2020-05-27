@@ -1,5 +1,8 @@
 #figure 2 plotting functions
 
+#load functions
+source("functions/sankowski-et-al-functions.R")
+
 #load packages
 require(tidyverse)
 require(clusterProfiler)
@@ -9,71 +12,81 @@ library(org.Hs.eg.db)
 load("data/counts_control.RData")
 load("data/df_control.RData")
 source("functions/sankowski-et-al-functions.R")
+
+#fix rownames counts table
+counts_control <- counts_control[!duplicated(gsub("_.*", "",rownames(counts_control))),]
+rownames(counts_control) <- gsub("_.*", "",rownames(counts_control))
 ord_clust <- levels(df_control$Cluster)
 retain_cl <- unique(df_control$Cluster)
 
-#go term analysis
-              load("data/up_genes_control.RData") 
-              up_genes <- up_genes_control %>%
-                filter(padj<.05, log2FoldChange>1) %>%
-                distinct(GENEID, Cluster) %>% 
-                mutate(GENEID = gsub('_.*', '', as.character(GENEID)))
+#Figure 2a
+#run go term analysis
+            run_go <- F
+              if (run_go) {#go term analysis
+                #this is how GO term analysis was run
+                            load("data/up_genes_control.RData") 
+                            up_genes <- up_genes_control %>%
+                              filter(padj<.05, log2FoldChange>1) %>%
+                              distinct(GENEID, Cluster) %>% 
+                              mutate(GENEID = gsub('_.*', '', as.character(GENEID)))
+                            
+                            #run cluster profiler
+                            
+                            #load background genes
+                            back_genes <- rownames(counts_control)[which(apply(counts_control > .1, 1, sum)>0)]
+                            background <- bitr(sub('_.*', '',back_genes), fromType = "SYMBOL",
+                                               toType = c("ENSEMBL", "SYMBOL", "ENTREZID"),
+                                               OrgDb = org.Hs.eg.db)
+                            
+                            #define empty data frame to collect data
+                            enrich_up <- data.frame(matrix(ncol = 10))
+                            colnames(enrich_up) <- c('ID','Description', 'GeneRatio', 'BgRatio' ,'pvalue', 'p.adjust', 'qvalue', 'geneID','Count' , 'Cluster')
+                            
+                            #this will take a while
+                            for (i in unique(up_genes$Cluster))  {
+                              
+                              tryCatch({
+                                gene <- up_genes$GENEID[up_genes$Cluster == i]
+                                gene.up_genes <- bitr(gene, fromType = "SYMBOL",
+                                                toType = c("ENSEMBL", "SYMBOL", "ENTREZID"),
+                                                OrgDb = org.Hs.eg.db)
+                                head(gene.up_genes)
+                                
+                                
+                                
+                                
+                                ggo <- groupGO(gene     = gene.up_genes[,3],
+                                               OrgDb    = org.Hs.eg.db,
+                                               ont      = "BP",
+                                               level    = 3,
+                                               readable = TRUE)
+                                
+                                head(ggo)
+                                
+                                ego <- enrichGO(gene          = gene.up_genes[,3],
+                                                universe      = background[,3],
+                                                OrgDb         = org.Hs.eg.db,
+                                                minGSSize     = 1,
+                                                ont           = "BP",
+                                                pool          = TRUE,
+                                                pAdjustMethod = "BH",
+                                                pvalueCutoff  = 0.01,
+                                                qvalueCutoff  = 0.05,
+                                                readable      = TRUE)
+                                head(ego@result, 50)
+                                
+                                ego_simpl <- clusterProfiler::simplify(ego, cutoff=0.7, by="p.adjust", select_fun=min, measure = "Wang")
+                                head(ego_simpl@result, 50)
+                                ego_simpl2 <- ego_simpl[!duplicated(ego_simpl@result$geneID)]
+                                head(ego_simpl2, 50)
+                                ego_simpl2$Cluster <- rep(as.character(i, nrow(ego_simpl2)))
+                                enrich_up <- rbind(enrich_up, ego_simpl2)
+                              }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+                            }
               
-              #run cluster profiler
-              
-              #load background genes
-              back_genes <- rownames(counts_control)[which(apply(counts_control > .1, 1, sum)>0)]
-              background <- bitr(sub('_.*', '',back_genes), fromType = "SYMBOL",
-                                 toType = c("ENSEMBL", "SYMBOL", "ENTREZID"),
-                                 OrgDb = org.Hs.eg.db)
-              
-              #define empty data frame to collect data
-              enrich_up <- data.frame(matrix(ncol = 10))
-              colnames(enrich_up) <- c('ID','Description', 'GeneRatio', 'BgRatio' ,'pvalue', 'p.adjust', 'qvalue', 'geneID','Count' , 'Cluster')
-              
-              #this will take a while
-              for (i in unique(up_genes$Cluster))  {
-                
-                tryCatch({
-                  gene <- up_genes$GENEID[up_genes$Cluster == i]
-                  gene.up_genes <- bitr(gene, fromType = "SYMBOL",
-                                  toType = c("ENSEMBL", "SYMBOL", "ENTREZID"),
-                                  OrgDb = org.Hs.eg.db)
-                  head(gene.up_genes)
-                  
-                  
-                  
-                  
-                  ggo <- groupGO(gene     = gene.up_genes[,3],
-                                 OrgDb    = org.Hs.eg.db,
-                                 ont      = "BP",
-                                 level    = 3,
-                                 readable = TRUE)
-                  
-                  head(ggo)
-                  
-                  ego <- enrichGO(gene          = gene.up_genes[,3],
-                                  universe      = background[,3],
-                                  OrgDb         = org.Hs.eg.db,
-                                  minGSSize     = 1,
-                                  ont           = "BP",
-                                  pool          = TRUE,
-                                  pAdjustMethod = "BH",
-                                  pvalueCutoff  = 0.01,
-                                  qvalueCutoff  = 0.05,
-                                  readable      = TRUE)
-                  head(ego@result, 50)
-                  
-                  ego_simpl <- clusterProfiler::simplify(ego, cutoff=0.7, by="p.adjust", select_fun=min, measure = "Wang")
-                  head(ego_simpl@result, 50)
-                  ego_simpl2 <- ego_simpl[!duplicated(ego_simpl@result$geneID)]
-                  head(ego_simpl2, 50)
-                  ego_simpl2$Cluster <- rep(as.character(i, nrow(ego_simpl2)))
-                  enrich_up <- rbind(enrich_up, ego_simpl2)
-                }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+                            head(enrich_up)
               }
-
-              head(enrich_up)
+              
 
 #plot go terms
               enrich_up <- read.csv('data/GO-terms-bp-control.csv', stringsAsFactors = F) %>%
@@ -128,3 +141,21 @@ retain_cl <- unique(df_control$Cluster)
               svg('bp/20180616-top40-PC_all_GoTerm_dot_plot.svg', height = 9, width = 6.5) #, units = 'in', res = 300
               dot_plot #https://stackoverflow.com/questions/15678261/r-ggplot-does-not-work-if-it-is-inside-a-for-loop-although-it-works-outside-of
               dev.off()
+              
+#Figure 2b
+          #t-SNE plans for go terms
+             #GO:0048002
+              genes <- c(strsplit(enrich_up[enrich_up$ID == "GO:0048002",'geneID'], split ='/')[[1]])
+              counts2 <- counts_control[genes,]
+              plotexptsne2(gene = genes, .sc=counts2, .df = df_control, line_width = 0)
+              
+              #GO:0050921
+              genes <- c(strsplit(enrich_up[enrich_up$ID == "GO:0050921",'geneID'], split ='/')[[1]])
+              counts2 <- counts_control[genes,]
+              plotexptsne2(gene = genes, .sc=counts2, .df = df_control, line_width = 0)
+          
+#figure 2c                 
+              genes <- c("CX3CR1", "TMEM119", "CSF1R", "P2RY12", "P2RY13", "SELPLG", "MARCKS")
+              counts2 <- counts_control[genes,]
+              plotexptsne2(gene = genes, .sc=counts2, .df = df_control, line_width = 0)
+              
