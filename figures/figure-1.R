@@ -14,6 +14,7 @@ library(reshape2)
     #load data
     load("data/counts_control.RData")
     load("data/df_control.RData")
+    load("data/up_genes_control.RData")
     
     #plot heatmap
     plot_heatmap(.sc = counts_control, .df=df_control, .up_genes= up_genes_control, .colors = viridis(100))
