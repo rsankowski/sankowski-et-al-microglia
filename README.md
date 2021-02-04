@@ -7,15 +7,15 @@ If you have any questions, please don't hesitate to raise an issue or contact me
 
 In the following I will list some comments for the respective files.
 
-###0_setup.R
+### 0_setup.R
 This step will check for the packages available on your system and add the ones that are not present yet. Since, at least at the time of the preparation of the associated manuscript some of the packages were only available on bioconductor, I have set up the installation with BiocManager. This way packages available on CRAN and on bioconductor will be installed. For some packages, you will need to make sure that you have certain software installed on your system, e.g. Macs need to have Xcode for some packages. Unfortunately, I may not be competent enought to remotely help in every case when issues arise. Therefore, I ask you to address these problems with your local bioinformaticion/bioinformaticist (https://www.biostars.org/p/1183/).
 What I can tell you is that the packages for deeplearning were by far the most difficult to install at the time of the analysis of these data. In these cases please refer to the documentation of the respective packages. When it worked for me I was quite happy and proud :)
 
-###1_load_control_data.R
+### 1_load_control_data.R
 This is a somewhat convoluted script that I had used to load the data back in 2018. When re-running all analysis I realized that in order to more reliably reproduce the clustering of the paper you need not only the .coutt.csv, but also the other cout*.csv files. We have updated the GEO repository associated with this paper with these files. All counts files can be found in the data/counts folder. 
 
-###2_RaceID_with_all_control_cells.R
+### 2_RaceID_with_all_control_cells.R
 At this point your computer will for the first time need quite some time to run RaceID on all control cells contained in this study. This script will return the sc object that you can use to obtain the equivalent of figure 1b containing different cell types. Please note that the layout of your t-SNE map will be different as the underlying algorithm has a random process that leads to different embeddings every time. You can transfer the embeddings from the original paper based on the provided table ("data/all_ctrl_cells_clusters+embeddings.csv"2).
 
-###3_RaceID_with_microglia_control_cells.R
+### 3_RaceID_with_microglia_control_cells.R
 This is the code that was the basis for most of the analyses for figures 1-3. The used parameters are copied adopted from the RaceID manual as it was in 2018 when the analysis was performed. 
