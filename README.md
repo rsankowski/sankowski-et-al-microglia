@@ -1,5 +1,5 @@
 ### sankowski-et-al-microglia
-This is the code repository for the analyses in the paper https://www.nature.com/articles/s41593-019-0532-y.
+This is the code repository for the analyses in the paper by Sankowski, Böttcher et al, Nat. Neurosci, 2019 (https://www.nature.com/articles/s41593-019-0532-y).
 It should be understood as a step by step instruction on how to reproduce the findings for the paper. Since it is written in R, users need 
 to install the R programming language on their system. The comprehensive R Archive Network is a reliable source for the current R distribution:
 https://cran.r-project.org/
