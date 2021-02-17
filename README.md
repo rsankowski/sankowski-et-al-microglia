@@ -8,7 +8,7 @@ If you have any questions, please don't hesitate to raise an issue or contact me
 In the following I will list some comments for the respective files in the bin/ folder.
 
 To get started please load the counts data from here: 
-https://drive.google.com/file/d/18LeSEK-NJySxtaAhfevfEjffpJypvoyC/view?usp=sharing
+https://drive.google.com/file/d/15k-vvl3nOvBh2OQeUCAfUOCsTNi-u3cx/view?usp=sharing
 Put and unpack the folder inside the data folder and you should be good to go!
 
 ### 0_setup.R
