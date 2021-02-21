@@ -119,19 +119,43 @@ go_dot_plot()
 # Figure 2b
 #t-SNE plans for go terms
 df <- data.frame(ID=names(sc@cpart), Cluster=sc@cpart, sc@tsne)
+cell_numbers <-as.numeric()
+for (i in 1:length(unique(sc@cpart)))
+{
+  cell_numbers[i] <- length(sc@cpart[sc@cpart==i])
+}
+names(cell_numbers) <- c(1:length(unique(sc@cpart)))
+retain_cl <- as.numeric(names(cell_numbers[cell_numbers > dim(sc@ndata)[2]/100]))
 
-#load enriched GO term data
-#GO:0048002
-genes <- c("CYBB","CAPZB","CANX","LGMN","PDIA3","ITGB5","MARCH1","CD74","B2M","HLA-B","HLA-DRA","HLA-DPA1","HLA-E","TREM2","HLA-DRB1","HLA-DRB5","FCGR1A","CTSD", "CTSS")
-plotexptsne2(.gene = genes, .df = df, line_width = 0, .retain_cl=unique(df$Cluster))
+df <- df[df$Cluster %in% retain_cl, ]
 
-#represenrative genes for the term GO:0050921. When re-analyzing the data I realized that I had initially hard-coded the genes for the
-#illustration. When you re-run the anaylsis on your machine you may get some extra or some less genes under GO term GO:0050921.
-#the overall pattern will be consistent
-genes <- c("CCL2","CCL4","PDGFB","C3AR1","EDN1","TMSB4X","CD74","AIF1")
-plotexptsne2(.gene = genes, .df = df, line_width = 0, .retain_cl=unique(df$Cluster))
+# Figure 2b
+#GO:0048002 - these genes were hard coded for the paper
+genes_antigen_pr <- c("CTSD","HLA-C","SLC11A1", "HLA-B", "HLA-A", "TREM2", "B2M", "HLA-DRA", "HLA-DRB1",
+                     "HLA-DPB1", "HLA-DQB1", "CD74", "HLA-DQA1", "HLA-DPA1", "HLA-E", "FCGR1A", "FCER1G", "HLA-DRB5", "HLA-DMB" )
+plotexptsne2(.gene = genes_antigen_pr, .df = df, line_width = 0)
+
+#GO:0050921 - these genes were hard coded for the paper
+genes_chemotaxis <- c("SERPINE1", "C3AR1", "CCL4", "CCL2", "C5AR1", "PLA2G7", "CD74", "TMSB4X", "PDGFB")
+plotexptsne2(.gene = genes_chemotaxis, .df = df, line_width = 0)
 
 # Figure 2c                 
-genes <- c("CX3CR1", "TMEM119", "CSF1R", "P2RY12", "P2RY13", "SELPLG", "MARCKS")
-counts2 <- counts_control[genes,]
-plotexptsne2(gene = genes, .sc=counts2, .df = df_control, line_width = 0)
+genes_homeo <- c("CX3CR1", "TMEM119", "CSF1R", "P2RY12", "P2RY13", "SELPLG", "MARCKS")
+plotexptsne2(.gene = genes_homeo, .df = df, line_width = 0)
+
+# Extended data figure 6 - line plots
+data_long <- make_data_long_cumulative(.genes = genes_antigen_pr, .order_clusters = c("8", "1", "9", "5", "6", "3", "2", "7")) %>%
+  na.omit()
+gene_line_plot(.gene="cumulative") +
+  labs(title = "antigen processing and presentation of peptide antigen")
+
+data_long <- make_data_long_cumulative(.genes = genes_chemotaxis, .order_clusters = c("8", "1", "9", "5", "6", "3", "2", "7")) %>%
+  na.omit()
+gene_line_plot(.gene="cumulative") +
+  labs(title = "positive regulation of chemotaxis")
+
+data_long <- make_data_long_cumulative(.genes = genes_homeo, .order_clusters = c("8", "1", "9", "5", "6", "3", "2", "7")) %>%
+  na.omit()
+gene_line_plot(.gene="cumulative") +
+  labs(title = "Homeostatic signature")
+
