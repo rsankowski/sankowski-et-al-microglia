@@ -1,4 +1,3 @@
-#open needed packages
 library(readxl)
 library(httr)
 
@@ -7,11 +6,9 @@ source(file.path("R", "RaceID3_StemID2_class.R"))
 source(file.path("R", "sankowski-et-al-functions.R"))
 
 #load counts
-load(file.path("data", "prdata.RData"))
+load(file.path("data", "prdata_gbm.RData"))
 
-#exclude Pat16
-prdata <- prdata[,!grepl("^Pat16", colnames(prdata))]
-
+## RaceID3
 # initialize SCseq object with transcript counts
 sc <- SCseq(prdata)
 # filtering of expression data
@@ -24,7 +21,7 @@ sc <- filterdata(sc, mintotal=1500,
                  hkn=FALSE, 
                  dsn=1, 
                  rseed=17000, 
-                 CGenes=c("HSP90AA1__chr14", "HSPA1A__chr6", "MTRNR2L1__chrX", "MTRNR2L12__chr3", "MTRNR2L8__chr11", "FOS__chr14", "MALAT1__chr11", "JUN__chr1", "DUSP1__chr5"),  
+                 CGenes=c("HSP90AA1__chr14", "HERPUD1__chr16", "HSPA1A__chr6", "MTRNR2L1__chrX", "MTRNR2L12__chr3", "MTRNR2L8__chr11", "FOS__chr14", "MALAT1__chr11", "JUN__chr1", "DUSP1__chr5"),  
                  FGenes=c("HSPB1__chr7", 
                           "HSPA6__chr1", 
                           "HSPH1__chr13", 
@@ -35,7 +32,6 @@ sc <- filterdata(sc, mintotal=1500,
                           "RPS16__chr19",
                           "DNAJB1__chr19", 
                           "H3F3B__chr17", 
-                          "HERPUD1__chr16", 
                           "NEAT1__chr11", 
                           "RP11-212I21.4__chr16", 
                           "IVNS1ABP__chr1", 
@@ -65,7 +61,7 @@ data_t$ID <- gsub('GM|WM|all|micr|pos|17Pl1|17Pl2', '', data_t$ID)
 #load batch info from the supplementary information on the paper website https://www.nature.com/articles/s41593-019-0532-y#Sec30
 url1 <- 'https://static-content.springer.com/esm/art%3A10.1038%2Fs41593-019-0532-y/MediaObjects/41593_2019_532_MOESM3_ESM.xlsx'
 GET(url1, write_disk(tf <- tempfile(fileext = ".xlsx")))
-batch_info <- batch_info <- read_excel(tf,sheet = 1 )
+batch_info <- read_excel(tf,sheet = 8, range = "B1:L9")
 str(batch_info)
 
 data_t <- left_join(data_t, batch_info)
@@ -73,12 +69,12 @@ table(data_t$ID, data_t$Batch)
 vars <- as.data.frame(data_t$Batch)
 sc@fdata <- varRegression(sc@fdata,vars)
 
-# correct for expression of degradation markers by PCA
+# correct for cell cycle, proliferation, and expression of degradation markers by PCA
 x <- CCcorrect(sc@fdata,
                vset=NULL,
-               CGenes=c("HSP90AA1__chr14", "HSPA1A__chr6", "MTRNR2L1__chrX", "MTRNR2L12__chr3", "MTRNR2L8__chr11", "FOS__chr14", "MALAT1__chr11", "JUN__chr1", "DUSP1__chr5"),
+               CGenes=c("HSP90AA1__chr14", "HSPA1A__chr6", "MTRNR2L1__chrX", "MTRNR2L12__chr3", "MTRNR2L8__chr11", "FOS__chr14", "MALAT1__chr11", "JUN__chr1", "DUSP1__chr5","HERPUD1__chr16"),
                ccor=.4,
-               nComp=NULL,
+               nComp=25,
                pvalue=.05,
                quant=.01,
                mode="pca")
@@ -101,7 +97,7 @@ sc <- clustexp(sc,
                SE.method="Tibs2001SEmax",
                SE.factor=.25,
                B.gap=50,
-               cln=15, #new cln based on the graphical output of the plotsaturation function
+               cln=0, 
                rseed=17000,
                FUNcluster="kmedoids",
                FSelect=TRUE)
@@ -156,5 +152,5 @@ plotsymbolstsne(sc,types=sub("(\\_\\d+)$","", names(sc@ndata)))
 
 sc@fcol <- c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", rep('white', 3), "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788",'#984EA3')
 
-save(sc, file = file.path("data", "sc_all_ctrl_cells.RData"))
+save(sc, file = file.path("data", "sc_gbm_all_cells.RData"))
 

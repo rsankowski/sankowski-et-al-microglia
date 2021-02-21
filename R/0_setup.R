@@ -43,7 +43,8 @@ list.of.packages <- c(
           "tensorflow",
           "tfestimators",
           "clusterProfiler",
-          "org.Hs.eg.db"
+          "org.Hs.eg.db",
+          "broom"
   )
 
 

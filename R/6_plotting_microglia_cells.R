@@ -72,7 +72,7 @@ df_clusters <- df %>%
             mean_V2 = mean(V2))
 df <- df %>% 
   left_join(df_clusters)
-
+save(df, file = file.path("data", "metadata_ctrl.RData"))
 # Figure 1c - heatmap of cluster marker genes
 up_genes <- read.csv(file.path('data', 'Human_ctrl_microglia_up_genes_padj<05_logfc>1.csv'), row.names = 1)
 #filter unannotated genes and genes associated with tissue dissection
@@ -105,10 +105,10 @@ pie_chart()
 genes <- c("CX3CR1__chr3", "HLA-DRA__chr6", "SPP1__chr4", "CCL2__chr17")
 
 #gene expression tsne plots
-plotexptsne2(.gene=genes[1])
-plotexptsne2(.gene=genes[2])
-plotexptsne2(.gene=genes[3])
-plotexptsne2(.gene=genes[4])
+plotexptsne2(.gene=genes[1], point_size = 4)
+plotexptsne2(.gene=genes[2], point_size = 4)
+plotexptsne2(.gene=genes[3], point_size = 4)
+plotexptsne2(.gene=genes[4], point_size = 4)
 
 #gene expression line plots
 #for this plot one needs a long data plot
@@ -132,9 +132,13 @@ df[df$Region!="Mixed",] %>%
   scale_fill_manual(values = toupper(c('#ef8a62', '#67a9cf')))
 
 #statistical testing for regions enrichment in clusters
+#to achieve best results for statistical testing, we conducted it for all clusters that are larger than 1% of all cells, including C4
+retain_cl2 <- names(table(sc@cpart)[table(sc@cpart) > dim(sc@ndata)[2]/100])
+df2 <- data.frame(ID=names(sc@cpart[sc@cpart %in% retain_cl2]), Cluster = sc@cpart[sc@cpart %in% retain_cl2], Region=ifelse(grepl('WM',names(sc@cpart[sc@cpart %in% retain_cl2])), 'WM', 
+                                                                        ifelse(grepl('GM',names(sc@cpart[sc@cpart %in% retain_cl2])), 'GM', 'Mixed')))
 clusters <- data.frame(table(sc@cpart))
 colnames(clusters) <- c('Cluster', 'freq_clust')
-regions <- as.data.frame(table(df$Cluster, df$Region))
+regions <- as.data.frame(table(df2$Cluster, df2$Region))
 colnames(regions) <- c("Cluster", "Region", "Freq_region")
 
 regions_wide <- spread(regions, Region, Freq_region)
@@ -180,10 +184,14 @@ tsne_plot_no_outline(FILL=df$Age) +
 #figure 3i
 mosaicGG2(data=df,X="Cluster", FILL = "Age_bin", colors = viridis(3, direction = -1)) 
 
-#statistical testing
+#statistical testing - ages
+#again, I included all clusters that are >1% in size. To this end I updated the df2 data frame
+df2 <- df2 %>%
+  mutate(Patient_ID = gsub("_.*", "", .$ID)) %>%
+  left_join(unique(df[, c("Patient_ID", "Age", "Age_bin")]))
 clusters <- data.frame(table(sc@cpart))
 colnames(clusters) <- c('Cluster', 'freq_clust')
-ages <- as.data.frame(table(df$Cluster, df$Age_bin))
+ages <- as.data.frame(table(df2$Cluster, df2$Age_bin))
 colnames(ages) <- c("Cluster", "Age_bin", "Freq_region")
 levels(ages$Age_bin) <- c('young', 'high', 'middle')
 
@@ -237,8 +245,82 @@ age_clust_ordered_high %>%
                                   padj<0.001 ~ '***',
                                   TRUE ~ 'n.s.'))
 
+# Figure 3j
+spp1_df <- read.csv2(file.path("data", "counting_SPP1.csv"), stringsAsFactors = F)[,-c(1, 4:9)]
+
+#tidy up the df
+colnames(spp1_df)[c(1,4,5)] <- c('ID','percent_spp1','total_iba1')
+spp1_df$percent_spp1 <- as.numeric(spp1_df$percent_spp1)
+spp1_df$spp1_reactivity <- ifelse(grepl('-$', spp1_df$Region), 'neg','pos')
+spp1_df$Region <- gsub(".$", '', spp1_df$Region)
+spp1_df$Age_bin <- ifelse(spp1_df$Age < 30, '<30 years', 
+                          ifelse(spp1_df$Age >50, '>50 years', '30-50 years'))
+
+spp1_df$Age_bin <- factor(spp1_df$Age_bin, levels = c('<30 years', '30-50 years' , '>50 years'))
+
+#plot
+
+spp1_df_bar <- spp1_df[spp1_df$spp1_reactivity == 'pos',] %>% 
+  group_by(Age_bin, Region) %>%
+  summarise(mean_pos = mean(percent_spp1),
+            median_pos = median(percent_spp1),
+            sd_pos = sd(percent_spp1),
+            se_pos = sd(percent_spp1)/sqrt(n()))
+
+age_spp1_plot <- ggplot(spp1_df_bar, aes(Age_bin, mean_pos, fill = Age_bin)) +
+  geom_col() +  
+  geom_errorbar(aes(ymin = mean_pos - se_pos, ymax = mean_pos + se_pos), width=0, lwd=1)+
+  geom_point(data=spp1_df[spp1_df$spp1_reactivity=='pos',], aes(Age_bin, percent_spp1, fill= Age_bin), pch=21, size=5, color='white') +
+  scale_fill_viridis(direction = -1, discrete = T) +
+  facet_wrap(~Region, ncol = 1) +
+  theme_minimal() +
+  theme(text = element_text(size=20),
+        legend.key = element_blank())+
+  coord_flip() +
+  labs(y='% SPP1+ cells', x = 'Age bin')
+
+age_spp1_plot 
+
 #Extended data Figure 3b - cell distance heatmap
 clustheatmap(sc,final=TRUE)
 
 #Extended data Figure 4
+#Figure 1h - cluster pie chart
+genes <- c("TMEM119__chr12", "APOE__chr19", "CD74__chr5", "IFI44L__chr1","LPL__chr8")
 
+#gene expression tsne plots
+plotexptsne2(.gene=genes[1], point_size = 4)
+plotexptsne2(.gene=genes[2], point_size = 4)
+plotexptsne2(.gene=genes[3], point_size = 4)
+plotexptsne2(.gene=genes[4], point_size = 4)
+plotexptsne2(.gene=genes[5], point_size = 4)
+
+#gene expression line plots
+#for this plot one needs a long data plot
+data_long <- make_data_long(.genes = genes) %>% na.omit
+#generate selected line plots
+gene_line_plot(.gene=genes[1])
+gene_line_plot(.gene=genes[2])
+gene_line_plot(.gene=genes[3])
+gene_line_plot(.gene=genes[4])
+gene_line_plot(.gene=genes[5])
+
+#Extended data Figure 7b
+data_t <- as.data.frame(t(as.matrix(sc@ndata)))
+data_t$ID <- rownames(data_t)
+data_t <- data_t %>% left_join(df)
+data_t$Age_bin <- factor(data_t$Age_bin, levels= c("<30 years", "30-50 years", ">50 years"))
+
+ggplot(na.omit(data_t[data_t$Region != 'Mixed',]), aes(Cluster, SPP1__chr4-0.1, fill = Age_bin)) +
+  geom_violin(scale = 'width', lwd=0.25) +
+  geom_boxplot(color='dark grey', width=0.5, position=position_dodge(0.9), outlier.shape = NA)+
+  scale_fill_viridis(discrete = T, direction = -1) +
+  theme_minimal() +
+  labs(y='SPP1 expression') +
+  facet_wrap(~ Region, nrow = 2)
+
+library(MASS)
+mod <- glm.nb(SPP1__chr4 ~ Cluster * Age_bin * Region, data = na.omit(data_t[data_t$Region != 'Mixed',]))
+summary(mod)
+mod_aov <- aov(mod)
+broom::tidy(TukeyHSD(mod_aov))
