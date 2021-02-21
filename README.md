@@ -16,7 +16,7 @@ This step will check for the packages available on your system and add the ones 
 What I can tell you is that the packages for deep learning were by far the most difficult to install at the time of the analysis of these data. In these cases please refer to the documentation of the respective packages. When it worked for me I was quite happy and proud :)
 
 ### 1_load_control_data.R
-This is a somewhat convoluted script that I had used to load the data back in 2018. When re-running all analysis I realized that in order to more reliably reproduce the clustering of the paper you need not only the .coutt.csv, but also the other cout*.csv files that you will find in the "data/counts" folder. Another unexpected behavior during the loading process is the necessity for the counts files of Pat16. The counts of the other patients were loaded together with this case, and the counts table is different when this sample is not loaded concomitantly. Even though I have excluded this sample before running RaceID, it is included for the loading. Since the sample was not included in the final manuscript, it is excluded from the following analyses. We have updated the GEO repository associated with this paper with these files. All counts files can be found in the data/counts folder. 
+This is a somewhat convoluted script that I had used to load the data back in 2018. When re-running all analysis I realized that in order to more reliably reproduce the clustering of the paper you need not only the .coutt.csv, but also the other cout*.csv files that you will find in the "data/counts" folder. Another unexpected behavior during the loading process is the necessity for the counts files of Pat16. The counts of the other patients were initially loaded together with this case, and the counts table is different when this sample is not loaded concomitantly. Even though we have not included this sample before running RaceID, it is included for the loading. The lines causing this unexpected behavior are lines 148-155, where cells expressing more than 20% of the low-quality cell marker KCNQ1OT1 and genes with a correlation with KCNQ1OT1 < .65 were excluded. Since the sample was not included in the final manuscript, it is excluded from the following analyses. We have updated the GEO repository associated with this paper with these files. All counts files can be found here: https://drive.google.com/file/d/15k-vvl3nOvBh2OQeUCAfUOCsTNi-u3cx/view?usp=sharing. 
 
 ### 2_RaceID_with_all_control_cells.R
 At this point your computer will for the first time need quite some time to run RaceID on all control cells contained in this study. This script will return the sc object that you can use to obtain the equivalent of figure 1b containing different cell types. Please note that the layout of your t-SNE map will be different as the underlying algorithm has a random process that leads to different embeddings every time. You can transfer the embeddings from the original paper based on the provided table ("data/all_ctrl_cells_clusters+embeddings_nn.csv"). The results of the RaceID analysis are saved under "data/sc_all_ctrl_cells.RData".
@@ -56,5 +56,21 @@ The model was trained on the fdata matrix of the sc object. The training matrix 
 - Lines 29-35 show the code to generate extended data figure 5b. Note that the displayed numbers are slightly different, as the data come from a re-run of the classifier.
 
 ### 9_GO_term_analysis_ctrl_microglia.R
-This script leads to the data for figures 2 and 
+This script leads to the data for figures 2 and Extended data Figure _.
 
+### 10_load_gbm_data.R
+This script loads the 4 glioblastoma samples and their age-matched controls. Since we saw age-dependent transcriptional changes, we included control cells from control individuals in a similar age range as the glioblastoma samples. To make the number of cells balanced, we compared 4 controls versus 4 glioblastoma. Like in the control samples, cells expressing more than 20% of the low-quality cell marker gene KCNQ1OT1 were excluded. Also genes with a correlation with KCNQ1OT1 < .65, ERCC and mitochondrial genes were excluded. 
+
+### 11_RaceID_GBM_all_cells.R
+This script runs RaceID on the glioblastoma cells and their age-matched controls without excluding non-microglia cells.
+
+### 12_plotting_gbm_all_cells.R
+This script generates the plots for Figure 9a  and Extended data figure 3a. 
+
+### 13_RaceID_gbm_micr.R
+This code runs RaceID on the glioblastoma microglia cells and their age-matched microglia controls. If you want to make sure that the clustering is consistent with the clustering from the published manuscript, please run lines 164-168. Furthermore, if you wish to run the downstream analysis and plots using the t-SNE layout of the published manuscript, please run the following lines 170-177. The output of these lines will be saven in the /data folder.
+
+### 14_diffgenes_gbm.R
+This code runs the differential gene expression analysis in a consistent way with script 5_diffgenes_ctrl.R.
+
+### 15_plotting_gbm_microglia_cells.R
