@@ -56,7 +56,10 @@ The model was trained on the fdata matrix of the sc object. The training matrix 
 - Lines 29-35 show the code to generate extended data figure 5b. Note that the displayed numbers are slightly different, as the data come from a re-run of the classifier.
 
 ### 9_GO_term_analysis_ctrl_microglia.R
-This script leads to the data for figures 2 and Extended data Figure _.
+This script leads to the data for figures 2 and Extended data figure 6.
+- Lines 133-140 code for Figure 2b
+- Lines 142-144 code for Figure 2c
+- Lines 146-160 code for Extended data figure 6
 
 ### 10_load_gbm_data.R
 This script loads the 4 glioblastoma samples and their age-matched controls. Since we saw age-dependent transcriptional changes, we included control cells from control individuals in a similar age range as the glioblastoma samples. To make the number of cells balanced, we compared 4 controls versus 4 glioblastoma. Like in the control samples, cells expressing more than 20% of the low-quality cell marker gene KCNQ1OT1 were excluded. Also genes with a correlation with KCNQ1OT1 < .65, ERCC and mitochondrial genes were excluded. 
