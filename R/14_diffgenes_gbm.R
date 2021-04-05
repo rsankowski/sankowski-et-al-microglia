@@ -52,7 +52,7 @@ up_genes$GENEID <- as.character(up_genes$GENEID)
 
 #remove not annotated or dissociation associated genes
 up_genes2 <- up_genes[!grepl("^(HSPA1A|MTRNR2L8|MTRNR2L12|HSP90AA1|MALAT1|ZFP36L1|ZFP36|FOS|MALAT1|HSPB*|DUSP1|HSPH1|HSPA*|JUN|HSP90B1|RPS16|DNAJB1|H3F3B|HERPUD1|NEAT1|IVNS1ABP|HIST1H2BG|RP*|XIST)", up_genes$GENEID),  ]
-up_genes2$GENEID <- gsub('_.*', '', up_genes2$GENEID)
+#up_genes2$GENEID <- gsub('_.*', '', up_genes2$GENEID)
 
 up_genes %>% 
   filter(padj<0.05, log2FoldChange > 1) %>% 

@@ -33,4 +33,3 @@ mat <- as.matrix.data.frame(table(verum_labels[,3],verum_labels[,2]))
 dimnames(mat) <- list(levels(verum_labels$Cluster_raceid), levels(verum_labels$Cluster_raceid))
 mat2 <- apply(mat, 2, function(x) x/sum(x))
 pheatmap(mat2, show_colnames = T, show_rownames = T, display_numbers = mat, fontsize = 20, font_col = "black", cluster_rows = F, cluster_cols = F)
-

@@ -44,7 +44,8 @@ list.of.packages <- c(
           "tfestimators",
           "clusterProfiler",
           "org.Hs.eg.db",
-          "broom"
+          "broom",
+          "yardstick"
   )
 
 

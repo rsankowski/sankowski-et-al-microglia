@@ -9,8 +9,10 @@ source(file.path("R", "sankowski-et-al-functions.R"))
 #load counts
 load(file.path("data", "prdata.RData"))
 
-#exclude Pat16
-prdata <- prdata[,!grepl("^Pat16", colnames(prdata))]
+# extract cells
+all_ctrl_cells <- read.csv(file.path("data", "all_ctrl_cells_clusters+embeddings_nn.csv"))
+cells <- all_ctrl_cells[[2]]
+prdata <- prdata[, cells]
 
 # initialize SCseq object with transcript counts
 sc <- SCseq(prdata)
@@ -78,7 +80,7 @@ x <- CCcorrect(sc@fdata,
                vset=NULL,
                CGenes=c("HSP90AA1__chr14", "HSPA1A__chr6", "MTRNR2L1__chrX", "MTRNR2L12__chr3", "MTRNR2L8__chr11", "FOS__chr14", "MALAT1__chr11", "JUN__chr1", "DUSP1__chr5"),
                ccor=.4,
-               nComp=NULL,
+               nComp=25,
                pvalue=.05,
                quant=.01,
                mode="pca")
@@ -158,3 +160,5 @@ sc@fcol <- c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "
 
 save(sc, file = file.path("data", "sc_all_ctrl_cells.RData"))
 
+#compare the clustering output
+table(sc@cpart, all_ctrl_cells$Cluster)

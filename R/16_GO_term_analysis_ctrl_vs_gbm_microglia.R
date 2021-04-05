@@ -10,11 +10,11 @@ source(file.path("R", "RaceID3_StemID2_class.R"))
 source(file.path("R", "sankowski-et-al-functions.R"))
 
 #load sc data
-load(file.path("data", "sc_ctrl_microglia_nn.RData"))
-load(file.path("data", "retain_cl_ctrl.RData"))
-load(file.path("data", "order_clusters_ctrl.RData"))
+load(file.path("data", "sc_gbm_microglia_nn.RData"))
+load(file.path("data", "order_clusters_gbm_micr.RData"))
+load(file.path("data", "retain_cl_gbm_micr.RData"))
 
-df <- read.csv(file.path('data','Human_ctrl_micr_unique_up_genes_wo_stress-genes_padj<05.csv'), stringsAsFactors = F, row.names = 1)
+df <- read.csv(file.path('data', 'Human_gbm_microglia_up_genes_padj<05_logfc>1.csv'), row.names = 1)
 df$GENEID <- gsub('_.*', '', df$GENEID)
 
 #load background genes
@@ -34,7 +34,7 @@ for (i in unique(df$Cluster))  {
     gene.df <- bitr(gene, fromType = "SYMBOL",
                     toType = c("ENSEMBL", "SYMBOL", "ENTREZID"),
                     OrgDb = org.Hs.eg.db)
-  
+    
     ggo <- groupGO(gene     = gene.df[,3],
                    OrgDb    = org.Hs.eg.db,
                    ont      = "BP",
@@ -61,16 +61,16 @@ for (i in unique(df$Cluster))  {
   }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
 }
 
-write.csv(enrich_up, file.path("data", "GO_terms_bp_ctrl_micr.csv"))
+write.csv(enrich_up, file.path("data", "GO_terms_bp_ctrl_vs_gbm_micr.csv"))
 
-# Figure 2a
+# Supplementary Figure 2a
 # load GO term enrichment output from the paper supplementary
 url1 <- 'https://static-content.springer.com/esm/art%3A10.1038%2Fs41593-019-0532-y/MediaObjects/41593_2019_532_MOESM3_ESM.xlsx'
 GET(url1, write_disk(tf <- tempfile(fileext = ".xlsx")))
-enrich_up2 <- read_excel(tf,sheet = 4, range = "B1:K466")
+enrich_up <- read_excel(tf,sheet = 10, range = "B1:K453")
 
 #load selected GO terms 
-relevant <- read.csv(file.path("data", "biologically-relevant-bp-GO-terms-control.csv"), stringsAsFactors = F)[[1]]
+relevant <- read.csv(file.path("data", "relevant-GO-terms-gbm.csv"), stringsAsFactors = F)[[1]]
 #Extract selected GO terms
 enrich_up <- enrich_up[enrich_up$Description %in% relevant,]
 
@@ -112,49 +112,36 @@ enrich_up$Description <- reorder(enrich_up$Description,enrich_up$Description,FUN
 enrich_up <- enrich_up[with(enrich_up, order(Cluster)),] #from url: https://stackoverflow.com/questions/1296646/how-to-sort-a-dataframe-by-columns
 enrich_up$Description <- factor(enrich_up$Description, levels = rev(enrich_up$Description[!duplicated(enrich_up$Description)]))
 colnames(enrich_up)[9] <- 'GeneCount'
+enrich_up$GeneCount <- as.numeric(enrich_up$GeneCount)
+enrich_up$qvalue <- as.numeric(enrich_up$qvalue)
 
 #plot
 go_dot_plot()
 
-# Figure 2b
-#t-SNE plans for go terms
-df <- data.frame(ID=names(sc@cpart), Cluster=sc@cpart, sc@tsne)
-cell_numbers <-as.numeric()
-for (i in 1:length(unique(sc@cpart)))
-{
-  cell_numbers[i] <- length(sc@cpart[sc@cpart==i])
-}
-names(cell_numbers) <- c(1:length(unique(sc@cpart)))
-retain_cl <- as.numeric(names(cell_numbers[cell_numbers > dim(sc@ndata)[2]/100]))
+# Figure 4h
+#load the GO enrichment terms from the paper supplementary 
+url1 <- 'https://static-content.springer.com/esm/art%3A10.1038%2Fs41593-019-0532-y/MediaObjects/41593_2019_532_MOESM3_ESM.xlsx'
+GET(url1, write_disk(tf <- tempfile(fileext = ".xlsx")))
+enrich_up <- read_excel(tf,sheet = 10, range = "B1:K453")
 
-df <- df[df$Cluster %in% retain_cl, ]
+#load metadata gbm
+load(file.path("data", "metadata_ctrl_gbm.RData"))
 
-# Figure 2b
-#GO:0048002 - these genes were hard coded for the paper
-genes_antigen_pr <- c("CTSD","HLA-C","SLC11A1", "HLA-B", "HLA-A", "TREM2", "B2M", "HLA-DRA", "HLA-DRB1",
-                     "HLA-DPB1", "HLA-DQB1", "CD74", "HLA-DQA1", "HLA-DPA1", "HLA-E", "FCGR1A", "FCER1G", "HLA-DRB5", "HLA-DMB" )
-plotexptsne2(.gene = genes_antigen_pr, .df = df, line_width = 0)
+genes_vegf <- c("C5AR1", "IL6ST", "IL1B")
+plotexptsne2(.gene=genes_vegf, point_size = 6) +
+  labs(subtitle = "GO:0010573")
 
-#GO:0050921 - these genes were hard coded for the paper
-genes_chemotaxis <- c("SERPINE1", "C3AR1", "CCL4", "CCL2", "C5AR1", "PLA2G7", "CD74", "TMSB4X", "PDGFB")
-plotexptsne2(.gene = genes_chemotaxis, .df = df, line_width = 0)
+genes_antigen_pr <- c("HLA-A", "HLA-B", "HLA-C")
+plotexptsne2(.gene=genes_antigen_pr, point_size = 6) +
+  labs(subtitle = "GO:0002480")
 
-# Figure 2c                 
-genes_homeo <- c("CX3CR1", "TMEM119", "CSF1R", "P2RY12", "P2RY13", "SELPLG", "MARCKS")
-plotexptsne2(.gene = genes_homeo, .df = df, line_width = 0)
-
-# Extended data figure 6 - line plots
-data_long <- make_data_long_cumulative(.genes = genes_antigen_pr, .order_clusters = c("8", "1", "9", "5", "6", "3", "2", "7")) %>%
+# Supplementary Figure 2b - line plots
+data_long <- make_data_long_cumulative(.genes = genes_antigen_pr, .order_clusters = order_clusters) %>%
   na.omit()
 gene_line_plot(.gene="cumulative") +
-  labs(title = "antigen processing and presentation of peptide antigen")
+  labs(title = "antigen processing and presentation of exogenous peptide antigen via MHC class I, TAP-independent")
 
-data_long <- make_data_long_cumulative(.genes = genes_chemotaxis, .order_clusters = c("8", "1", "9", "5", "6", "3", "2", "7")) %>%
+data_long <- make_data_long_cumulative(.genes = genes_vegf, .order_clusters = order_clusters) %>%
   na.omit()
 gene_line_plot(.gene="cumulative") +
-  labs(title = "positive regulation of chemotaxis")
-
-data_long <- make_data_long_cumulative(.genes = genes_homeo, .order_clusters = c("8", "1", "9", "5", "6", "3", "2", "7")) %>%
-  na.omit()
-gene_line_plot(.gene="cumulative") +
-  labs(title = "Homeostatic signature")
+  labs(title = "vascular endothelial growth factor production")

@@ -97,7 +97,7 @@ sc <- clustexp(sc,
                SE.method="Tibs2001SEmax",
                SE.factor=.25,
                B.gap=50,
-               cln=0, 
+               cln=0,
                rseed=17000,
                FUNcluster="kmedoids",
                FSelect=TRUE)

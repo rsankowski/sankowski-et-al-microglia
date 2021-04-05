@@ -73,6 +73,7 @@ df_clusters <- df %>%
 df <- df %>% 
   left_join(df_clusters)
 save(df, file = file.path("data", "metadata_ctrl.RData"))
+
 # Figure 1c - heatmap of cluster marker genes
 up_genes <- read.csv(file.path('data', 'Human_ctrl_microglia_up_genes_padj<05_logfc>1.csv'), row.names = 1)
 #filter unannotated genes and genes associated with tissue dissection
@@ -131,121 +132,18 @@ df[df$Region!="Mixed",] %>%
   mosaicGG2(data=.,FILL = "Region", X="Cluster") +
   scale_fill_manual(values = toupper(c('#ef8a62', '#67a9cf')))
 
-#statistical testing for regions enrichment in clusters
-#to achieve best results for statistical testing, we conducted it for all clusters that are larger than 1% of all cells, including C4
-retain_cl2 <- names(table(sc@cpart)[table(sc@cpart) > dim(sc@ndata)[2]/100])
-df2 <- data.frame(ID=names(sc@cpart[sc@cpart %in% retain_cl2]), Cluster = sc@cpart[sc@cpart %in% retain_cl2], Region=ifelse(grepl('WM',names(sc@cpart[sc@cpart %in% retain_cl2])), 'WM', 
-                                                                        ifelse(grepl('GM',names(sc@cpart[sc@cpart %in% retain_cl2])), 'GM', 'Mixed')))
-clusters <- data.frame(table(sc@cpart))
-colnames(clusters) <- c('Cluster', 'freq_clust')
-regions <- as.data.frame(table(df2$Cluster, df2$Region))
-colnames(regions) <- c("Cluster", "Region", "Freq_region")
-
-regions_wide <- spread(regions, Region, Freq_region)
-
-regions_df <- regions_wide %>%
-  left_join(clusters)
-
-regions_df$net_freq_clust <- regions_df$freq_clust-regions_df$Mixed
-
-#hypergeometric test for grey matter
-reg_clust_ordered_gm <- data.frame(q=regions_df$GM, 
-                                   m=sum(regions_df$GM), 
-                                   n=sum(regions_df$WM),
-                                   k=regions_df$net_freq_clust)
-reg_clust_ordered_gm %>%
-  mutate(p_hyper = apply(., MARGIN = 1, function(x) 1-phyper(x[[1]]-1, x[[2]], x[[3]], x[[4]])), #probability to get q or more successes in populaton
-         padj = p.adjust(p_hyper, method="BH"),
-         Cluster = regions_df$Cluster,
-         Significance = case_when(padj<0.05 & padj>0.01 ~ '*',
-                                  padj<0.01 & padj>0.001 ~ '**',
-                                  padj<0.001 ~ '***',
-                                  TRUE ~ 'n.s.'))
-
-#hypergeometric test for white matter
-reg_clust_ordered_wm <- data.frame(q=regions_df$WM, 
-                                   m=sum(regions_df$WM), 
-                                   n=sum(regions_df$GM),
-                                   k=regions_df$net_freq_clust)
-reg_clust_ordered_wm %>%
-  mutate(p_hyper = apply(., MARGIN = 1, function(x) 1-phyper(x[[1]]-1, x[[2]], x[[3]], x[[4]])), #probability to get q or more successes in populaton
-         padj = p.adjust(p_hyper, method="BH"),
-         Cluster = regions_df$Cluster,
-         Significance = case_when(padj<0.05 & padj>0.01 ~ '*',
-                                  padj<0.01 & padj>0.001 ~ '**',
-                                  padj<0.001 ~ '***',
-                                  TRUE ~ 'n.s.'))
-
 #figure 3h
 tsne_plot_no_outline(FILL=df$Age) +
   scale_fill_viridis('viridis', direction = -1)+
   scale_color_viridis('viridis', direction = -1)
 
 #figure 3i
-mosaicGG2(data=df,X="Cluster", FILL = "Age_bin", colors = viridis(3, direction = -1)) 
-
-#statistical testing - ages
-#again, I included all clusters that are >1% in size. To this end I updated the df2 data frame
-df2 <- df2 %>%
-  mutate(Patient_ID = gsub("_.*", "", .$ID)) %>%
-  left_join(unique(df[, c("Patient_ID", "Age", "Age_bin")]))
-clusters <- data.frame(table(sc@cpart))
-colnames(clusters) <- c('Cluster', 'freq_clust')
-ages <- as.data.frame(table(df2$Cluster, df2$Age_bin))
-colnames(ages) <- c("Cluster", "Age_bin", "Freq_region")
-levels(ages$Age_bin) <- c('young', 'high', 'middle')
-
-ages_wide <- spread(ages, Age_bin, Freq_region)
-
-ages_df <- ages_wide %>%
-  left_join(clusters)
-
-#young
-age_clust_ordered_young <- data.frame(q=ages_df$young, 
-                                      m=sum(ages_df$young), 
-                                      n=sum(ages_df$middle, ages_df$high),
-                                      k=ages_df$freq_clust)
-
-age_clust_ordered_young %>%
-  mutate(p_hyper = apply(., MARGIN = 1, function(x) 1-phyper(x[[1]]-1, x[[2]], x[[3]], x[[4]])), #probability to get q or more successes in populaton
-         padj = p.adjust(p_hyper, method="BH"),
-         Cluster = ages_df$Cluster,
-         Significance = case_when(padj<0.05 & padj>0.01 ~ '*',
-                                  padj<0.01 & padj>0.001 ~ '**',
-                                  padj<0.001 ~ '***',
-                                  TRUE ~ 'n.s.'))
-
-#middle
-age_clust_ordered_middle <- data.frame(q=ages_df$middle, 
-                                       m=sum(ages_df$middle), 
-                                       n=sum(ages_df$young, ages_df$high),
-                                       k=ages_df$freq_clust)
-
-age_clust_ordered_middle %>%
-  mutate(p_hyper = apply(., MARGIN = 1, function(x) 1-phyper(x[[1]]-1, x[[2]], x[[3]], x[[4]])), #probability to get q or more successes in populaton
-         padj = p.adjust(p_hyper, method="BH"),
-         Cluster = ages_df$Cluster,
-         Significance = case_when(padj<0.05 & padj>0.01 ~ '*',
-                                  padj<0.01 & padj>0.001 ~ '**',
-                                  padj<0.001 ~ '***',
-                                  TRUE ~ 'n.s.'))
-
-#high
-age_clust_ordered_high <- data.frame(q=ages_df$high, 
-                                     m=sum(ages_df$high), 
-                                     n=sum(ages_df$young, ages_df$middle),
-                                     k=ages_df$freq_clust)
-
-age_clust_ordered_high %>%
-  mutate(p_hyper = apply(., MARGIN = 1, function(x) 1-phyper(x[[1]]-1, x[[2]], x[[3]], x[[4]])), #probability to get q or more successes in populaton
-         padj = p.adjust(p_hyper, method="BH"),
-         Cluster = ages_df$Cluster,
-         Significance = case_when(padj<0.05 & padj>0.01 ~ '*',
-                                  padj<0.01 & padj>0.001 ~ '**',
-                                  padj<0.001 ~ '***',
-                                  TRUE ~ 'n.s.'))
+df$Age_bin <-  factor(df$Age_bin, levels = c("<30 years", "30-50 years", ">50 years"))
+mosaicGG2(data=df,X="Cluster", FILL = "Age_bin", colors = viridis(3, direction = -1)) ; ggsave("plots/cluster_age_bin_marimekko.pdf", useDingbats=F)
 
 # Figure 3j
+#note that the age of patients here may diverge from the age in suppl. table 1. This is because here age was rounded down similar to the floor function
+#while in supplementary table 1 it was rounded up or down using the round() function
 spp1_df <- read.csv2(file.path("data", "counting_SPP1.csv"), stringsAsFactors = F)[,-c(1, 4:9)]
 
 #tidy up the df
@@ -259,7 +157,6 @@ spp1_df$Age_bin <- ifelse(spp1_df$Age < 30, '<30 years',
 spp1_df$Age_bin <- factor(spp1_df$Age_bin, levels = c('<30 years', '30-50 years' , '>50 years'))
 
 #plot
-
 spp1_df_bar <- spp1_df[spp1_df$spp1_reactivity == 'pos',] %>% 
   group_by(Age_bin, Region) %>%
   summarise(mean_pos = mean(percent_spp1),
@@ -285,7 +182,6 @@ age_spp1_plot
 clustheatmap(sc,final=TRUE)
 
 #Extended data Figure 4
-#Figure 1h - cluster pie chart
 genes <- c("TMEM119__chr12", "APOE__chr19", "CD74__chr5", "IFI44L__chr1","LPL__chr8")
 
 #gene expression tsne plots
@@ -318,9 +214,3 @@ ggplot(na.omit(data_t[data_t$Region != 'Mixed',]), aes(Cluster, SPP1__chr4-0.1, 
   theme_minimal() +
   labs(y='SPP1 expression') +
   facet_wrap(~ Region, nrow = 2)
-
-library(MASS)
-mod <- glm.nb(SPP1__chr4 ~ Cluster * Age_bin * Region, data = na.omit(data_t[data_t$Region != 'Mixed',]))
-summary(mod)
-mod_aov <- aov(mod)
-broom::tidy(TukeyHSD(mod_aov))
