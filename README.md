@@ -19,16 +19,16 @@ What I can tell you is that the packages for deep learning were by far the most 
 This is a somewhat convoluted script that I had used to load the data back in 2018. When re-running all analysis I realized that in order to more reliably reproduce the clustering of the paper you need not only the .coutt.csv, but also the other cout*.csv files that you will find in the "data/counts" folder. Another unexpected behavior during the loading process is the necessity for the counts files of Pat16. The counts of the other patients were initially loaded together with this case, and the counts table is different when this sample is not loaded concomitantly. Even though we have not included this sample before running RaceID, it is included for the loading. The lines causing this unexpected behavior are lines 148-155, where cells expressing more than 20% of the low-quality cell marker KCNQ1OT1 and genes with a correlation with KCNQ1OT1 < .65 were excluded. Since the sample was not included in the final manuscript, it is excluded from the following analyses. We have updated the GEO repository associated with this paper with these files. All counts files can be found here: https://drive.google.com/file/d/15k-vvl3nOvBh2OQeUCAfUOCsTNi-u3cx/view?usp=sharing. 
 
 ### 2_RaceID_with_all_control_cells.R
-At this point your computer will for the first time need quite some time to run RaceID on all control cells contained in this study. This script will return the sc object that you can use to obtain the equivalent of figure 1b containing different cell types. Please note that the layout of your t-SNE map will be different as the underlying algorithm has a random process that leads to different embeddings every time. You can transfer the embeddings from the original paper based on the provided table ("data/all_ctrl_cells_clusters+embeddings_nn.csv"). The results of the RaceID analysis are saved under "data/sc_all_ctrl_cells.RData".
+At this point your computer will for the first time need quite some time to run RaceID on all control cells contained in this study. This script will return the sc object that you can use to obtain the equivalent of figure 1b containing different cell types. Please note that the layout of your t-SNE map will be different as the underlying algorithm has a random process that leads to different embeddings every time. The results of the RaceID analysis are saved under "data/sc_all_ctrl_cells.RData".
 
 ### 3_plotting_all_control_cells.R
-This code contains the graphical output that was used for figures 1b and Extended data Figure 3a. Note that the layout of the t-SNE map may be different from the paper due to the random character of the embedding. If you want the same t-SNE layout of the function please use the provided table ("data/all_ctrl_cells_clusters+embeddings_nn.csv") as described in lines 7-12 of the script. To make sure that the clustering output of your RaceID run was consistent with the clustering in the original paper please run the code in line 12. If the clustering is consistent, you should only see numbers >0 on the diagonal and the other numbers should be 0. 
-- Lines 14-16 contain the code for figure 1b
-- Lines 18-37 contain the code for extended data figure 3a
+This code contains the graphical output that was used for figures 1b and Extended data Figure 3a. Note that the layout of the t-SNE map may be different from the paper due to the random character of the embedding.
+- Lines 9-11 contain the code for figure 1b
+- Lines 13-33 contain the code for extended data figure 3a
 
 ### 4_RaceID_with_microglia_control_cells.R
 This is the code that was the basis for most of the analyses for figures 1-3. The used parameters are copied and adopted from the RaceID manual as it was in 2018 when the analysis was performed. For your reference I added the manual in the data/ folder under "Reference_manual_RaceID3_StemID2.pdf". Genes associated with tissue dissociation were removed from RaceID clustering. Again, please note that since the t-SNE algorithm has a random component your t-SNE map will look different from the one that I have obtained after my analysis. The clustering, however is expected to be stable. One aspect that caused internal discussions was the output of the findoutliers function on the RaceID object. The purpose of this function is to find "rare" cell types by inducing some degree of overclustering, for a reference see the original publication by Grün et al, Nature 2015 (https://doi.org/10.1038/nature14966). Running this function gave rise to a somewhat bizzare cluster 14 that consisted of two distinct clouds of ~30 cells each that were positioned at opposite ends of the t-SNE map as outliers from clusters 2 and 9, respectively. Since, as shown in the paper, clusters 2 and 9 have substantial transcriptional and biological differences, we found the fusion of cells from both clusters counterintuitive. We had several options on how to proceed and decided to keep the outlier cells from clusters 2 and 9 with their respective parent clusters as they were assigned by the original clustering before outlier detection. An alternative would have been to further subcluster cluster 14 and separate both cell clouds. However, this would have led to the exclusion of these cells from analysis as the resulting clusters would have fallen under the 1% cutoff that we had set for the inclustion of clusters into the analysis. We wanted to avoid exclustion of cells as much as possible to maximize the insights gained from our data. 
-If you wish to obtain plots and analyses with the embeddings and clustering of the original paper please enforce both from the file "data/ctrl_microglia_clusters+embeddings_nn.csv". This is done in lines 161-172 of the present script. In order to run the analysis on an identical RaceID object as was used for the paper, please run the following analyses with the object saved under "data/sc_ctrl_microglia_nn.RData". If you run the analyses with the object that you obtained from running this script yourself, your downstream results will be identical or consistent with the paper. 
+If you wish to obtain plots and analyses with the embeddings and clustering of the original paper please enforce both from the file "data/ctrl_microglia_clusters+embeddings_nn.csv". This is done in lines 161-172 of the present script. In order to run the analysis on an identical RaceID object as was used for the paper, please run the following analyses with the object saved under "data/sc_ctrl_microglia_nn.RData". If you run the analyses with the object that you obtained from running this script yourself, your downstream results will be consistent with the paper. 
 
 ### 5_diffgenes_ctrl.R
 Differential gene expression testing was conducted similarly to the DESeq2 algorithm as described by Love et al, 2014 (https://doi.org/10.1186/s13059-014-0550-8). For this analysis comparisons between each cluster and all other pooled clusters and all other individual clusters were conducted. The output was saved in the folder "data/Cluster_specific_genes/Up". It is exported for analysis using lines 45-68. In order to ensure that genes associated with tissue dissociation overlay potential biological effects, a number of genes in question was removed from the list before plotting. The gene list obtained here was used to generate figure panels 1c, 1h, figure 2, figure 3h-j as well as Extended data figures 4-5 and 7d.
@@ -36,16 +36,20 @@ Differential gene expression testing was conducted similarly to the DESeq2 algor
 ### 6_plotting_microglia_cells.R
 This script generates the graphical output for figure panels 1c-f, 1h, figure 2, figure 3d-e, h-j as well as Extended data figures 3b, 4-5 and 7d. The code is annotated to ensure better readability. In lines 15-21 the cluster order is set in order for transcriptionally similar clusters to appear next to each other. This is achieved using the output of the clustheatmap function of RaceID. The graphical output of this function, a cell-to-cell distance heatmap, is shown in Extended data figure 3b of the manuscript. 
 - Lines 23-40 exclude clusters containing fewer than 1% of all cells and filtering the cluster order accordingly. 
-- Lines 42-74 generate a metadata table that is used for most abovementioned plots. 
-- Lines 76-92 show the plot to generate a heatmap of the top 20 differentially expressed genes per cluster as shown in figure 1c. 
-- Lines 94-96 show the marimekko patient plot from figure 1d. 
-- Lines 98-99 show the code for figure 1e. 
-- Lines 101-102 show the code for figure 1f. 
-- Lines 104-121 show the code for figure 1h. 
-- Lines 123-126 show the code for figure 3d.
-- Lines 128-173 show the code for figure 3e and the statistical testing for regional enrichment.
-- Lines 175-178 show the code for figure 3h.
-- Lines 
+- Lines 42-75 generate a metadata table that is used for most abovementioned plots. 
+- Lines 77-93 show the plot to generate a heatmap of the top 20 differentially expressed genes per cluster as shown in figure 1c. 
+- Lines 95-97 show the marimekko patient plot from figure 1d. 
+- Lines 99-100 show the code for figure 1e. 
+- Lines 102-103 show the code for figure 1f. 
+- Lines 105-122 show the code for figure 1h. 
+- Lines 124-127 show the code for figure 3d.
+- Lines 129-133 show the code for figure 3e.
+- Lines 135-138 show the code for figure 3h.
+- Lines 140-142 show the code for figure 3i.
+- Lines 144-179 show the code for figure 3j.
+- Lines 181-182 show the code for Ext. data figure 3b.
+- Lines 184-202 show the code for Ext. data figure 4.
+- Lines 204-217 show the code for Ext. data figure 7b.
 
 ### 7_neural_net_classifier_ctrl_microglia.R
 This script shows the training and prediction using a deep neural network classifier for cell subset prediction. This classifier was developed in order to compare our cells to published human microglia datasets. Luckily me, keras was released at that time so I utilized it. The installation was a bit tricky, but doable with the documentation of the packages. I have added the required packages in the "0_setup.R" script. At the beginning of the present script you will also find commented out sections on the steps that I have taken to get this script up and running. Unfortunately, it still takes quite a few steps to get the packages up and running. To save th work for you, I have saved the outputs of the predictors under "data/deep-learning-predictor-controls"
@@ -57,9 +61,9 @@ The model was trained on the fdata matrix of the sc object. The training matrix 
 
 ### 9_GO_term_analysis_ctrl_microglia.R
 This script leads to the data for figures 2 and Extended data figure 6.
-- Lines 133-140 code for Figure 2b
-- Lines 142-144 code for Figure 2c
-- Lines 146-160 code for Extended data figure 6
+- Lines 132-140 code for Figure 2b.
+- Lines 142-144 code for Figure 2c.
+- Lines 146-160 code for Extended data figure 6.
 
 ### 10_load_gbm_data.R
 This script loads the 4 glioblastoma samples and their age-matched controls. Since we saw age-dependent transcriptional changes, we included control cells from control individuals in a similar age range as the glioblastoma samples. To make the number of cells balanced, we compared 4 controls versus 4 glioblastoma. Like in the control samples, cells expressing more than 20% of the low-quality cell marker gene KCNQ1OT1 were excluded. Also genes with a correlation with KCNQ1OT1 < .65, ERCC and mitochondrial genes were excluded. 
@@ -68,12 +72,62 @@ This script loads the 4 glioblastoma samples and their age-matched controls. Sin
 This script runs RaceID on the glioblastoma cells and their age-matched controls without excluding non-microglia cells.
 
 ### 12_plotting_gbm_all_cells.R
-This script generates the plots for Figure 9a  and Extended data figure 3a. 
+This script generates the plots for Figure 4a and Extended data figure 9a.
+- Lines 22-30 contain the code for figure 4a.
+- Lines 32-52 contain the code for Extended data figure 9a.
 
 ### 13_RaceID_gbm_micr.R
-This code runs RaceID on the glioblastoma microglia cells and their age-matched microglia controls. If you want to make sure that the clustering is consistent with the clustering from the published manuscript, please run lines 164-168. Furthermore, if you wish to run the downstream analysis and plots using the t-SNE layout of the published manuscript, please run the following lines 170-177. The output of these lines will be saven in the /data folder.
+This code runs RaceID on the glioblastoma microglia cells and their age-matched microglia controls. If you want to make sure that the clustering is consistent with the clustering from the published manuscript, please run lines 164-168. Furthermore, if you wish to run the downstream analysis and plots using the t-SNE layout of the published manuscript, please run the following lines 170-177. The output of these lines will be saved in the /data folder.
 
 ### 14_diffgenes_gbm.R
 This code runs the differential gene expression analysis in a consistent way with script 5_diffgenes_ctrl.R.
 
 ### 15_plotting_gbm_microglia_cells.R
+This script contains the code for the visualization of the GBM microglia data.
+- Lines 1-60 aet up the metadata table for plotting.
+- Lines 62-63 have the code for figure 4b.
+- Lines 65-66 contain the code for figure 4c.
+- Lines 68-84 contain the code for figure 4d.
+- Lines 86-88 contain the code for figure 4e.
+- Lines 90-91 contain the code for figure 4f.
+- Lines 93-107 contain the code for figure 4g.
+- Lines 109-116 contain the code for figure 5d.
+- Lines 118-130 contain the code for figure 5f.
+- Lines 132-133 contain the code for figure 5g.
+- Lines 135-136 contain the code for Extended data figure 9b.
+- Lines 138-156 contain the code for Extended data figure 10.
+- Lines contain the code for Supplementary Figure 1.
+
+### 16_GO_term_analysis_ctrl_vs_gbm_microglia.R
+This script contains the code for the GO term analysis of the GBM microglia data
+- Lines 1-64 show the code for GO term enrichment analysis.
+- Lines 66-119 contain the code for Supplementary Figure 2a.
+- Lines 121-136 contain the code for Figure 4h.
+- Lines 138-147 contain the code for Supplementary Figure 2b.
+
+### 17_StemID_ctrl_gbm_micr.R
+This script contains the code for the pseudotime analysis with StemID. 
+- Lines 1-36 set up the data for plotting.
+- Lines 38-40 contain the code for Supplementary figure 5.
+- Lines 42-66 contain the code for Figure 6a.
+
+### 18_CyTOF_plotting_gbm.R
+This script shows the code for parts of the CyTOF data.
+- Lines 1-13 load the data for figure panel 6e.
+- Lines 15-29 contain the code for figure panel 6e.
+- Lines 31-42 contain the code for the single cell RNA-seq data in Supplementary data figure 8.
+
+### 19_monocle_ctrl_gbm.R
+This script contains the code to run monocle on the data. 
+- Lines 1-76 load the counts data and run monocle.
+- Lines 78-137 contain the code for supplementary figure 6a.
+- Lines 139-152 contain the code for supplementary figure 6b.
+
+### 20_neural_net_classifier_gbm.R
+This script contains the code to train the neural network classifier.
+
+### 21_plotting_neural_net_classifier_gbm_predictions.R
+This script contains the code to plot the outputs of the neural net classifier
+- Lines 1-12 load the data.
+- Lines 14-19 contain the code for supplementary figure 3a.
+- Lines 20-36 contain the code for supplementary figure 3b.
